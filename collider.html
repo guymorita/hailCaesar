@@ -1,0 +1,182 @@
+<html>
+<head>
+<style>
+body {
+  background-color: #e5fff9;
+  font-family: 'Permanent Marker', cursive;
+
+}
+#container {
+  border: 2px solid gray;
+  box-shadow: 10px 10px 40px #111;
+  width: 960;
+  height: 500;
+  background-color: #ffffe5;
+}
+#scorebox {
+  margin: 20px;
+  border: 1px solid gray;
+  width: 200px;
+  height: 50px;
+  background-color: #a8ffe9;
+  box-shadow: 2px 2px 10px #111;
+
+}
+#title {
+  margin: 20px 0px 0px 700px;
+}
+</style>
+<link href='http://fonts.googleapis.com/css?family=Permanent+Marker' rel='stylesheet' type='text/css'>
+
+</head>
+<body>
+  <div id="container"></div>
+  <div id="scorebox"></div>
+  <div id="title">Hail Caesar!</div>
+  <script src="http://d3js.org/d3.v2.min.js?2.10.1"></script>
+  <script src="http://underscorejs.org/underscore-min.js"></script>
+  <script>
+  var width = 960;
+  var height = 500;
+  var pinkCollision = false;
+  var blueCollision = false;
+  var throttledPink;
+  var clickedEnemy;
+  var counter = 0;
+  var reset = false;
+  var highScore = 0
+  var duration = 3000;
+  var data = [];
+
+  data.push({"x": Math.random(), "y": Math.random(), "type": "pink"});
+
+  var h = 1000;
+  var svg = d3.select("#container").append("svg:svg")
+    .attr("width", width)
+    .attr("height", height)
+    .style("pointer-events", "all")
+    .on("mousemove", characterMove);
+
+  var x = d3.scale.linear().domain([0,1]).range([width / 2 - 400,width / 2 + 400]),
+  y = d3.scale.linear().domain([0,1]).range([0,height]),
+  r = d3.scale.linear().domain([0,1]).range([5,10]),
+  c = d3.scale.linear().domain([0,1]).range(["hsl(275, 100%, 40%)", "hsl(330, 100%, 75%)"]).interpolate(d3.interpolateHsl)
+  b = d3.scale.linear().domain([0,1]).range(["hsl(160, 100%, 60%)", "hsl(190, 100%, 75%)"]).interpolate(d3.interpolateHsl)
+
+  var updateScore = function() {
+    if (counter > highScore) {
+      highScore = counter;
+    }
+    // d3.select("#scorebox").text("High score! " + highScore);
+      d3.select("#scorebox").text("Score " + counter + "  High score: " + highScore);
+    // }
+  } 
+
+  //make a character
+  svg.append("svg:circle")
+      .attr("r", 15)
+      .attr("class", "caesar")
+      .attr("cx", width / 2)
+      .attr("cy", height / 2)
+      .attr("fill", "hsl(120, 120, 120)");
+  
+  //given a function, return a function othat only gets called once
+  function runDetection() {
+    pinkCollision = false;
+    svg.selectAll("circle.dots").each(collisionDetection)
+    if (pinkCollision){
+      throttledPink();
+    }
+  }
+  //make function to move him around
+  function characterMove() {
+    var mouseLocation = d3.svg.mouse(this);
+    svg.select("circle.caesar")
+      .attr("cx", mouseLocation[0])
+      .attr("cy", mouseLocation[1])
+  }
+  function reset() {
+
+  }
+
+  //collision detection function
+  function collisionDetection() {
+    var caesar = svg.select("circle.caesar");
+    var enemy = d3.select(this);
+    var sumOfRadii = parseInt(caesar.attr("r")) + parseInt(enemy.attr("r"));
+    var caesarX = parseInt(caesar.attr("cx")),
+        caesarY = parseInt(caesar.attr("cy")),
+        enemyX  = parseInt(enemy.attr("cx")),
+        enemyY  = parseInt(enemy.attr("cy"));
+    var distance = Math.sqrt(Math.pow((caesarX - enemyX), 2) + Math.pow((caesarY - enemyY), 2));
+    // console.log('distance', distance);
+    // console.log('sum of radii', sumOfRadii);
+    if (distance <= sumOfRadii && enemy.attr("id") === "pink") { 
+      duration = duration - 50;
+      enemy.remove();
+      data.pop();
+      counter++;
+      updateScore();
+      pinkCollision = true;
+    }
+    else if (distance <= sumOfRadii && enemy.attr("id") === "blue") {
+      data = [];
+      update();
+      var currentCounter = counter;
+      counter = 0;
+      updateScore();
+      data.push({"x": Math.random(), "y": Math.random(), "type": "pink"});
+      alert("Caesar is down! :( but you collected " + currentCounter + " pink blobs!");
+    }
+  }
+
+  function update(){
+    //dump the once function here
+    for ( var i = 0; i < data.length; i++) {
+      data[i]["x"] = Math.random();
+      data[i]["y"] = Math.random();
+    }
+    var newCircles = svg.selectAll("circle.dots")
+        .transition().duration(duration)
+        .attr("cx", function(d) { return x(d.x) })
+        .attr("cy", function(d) { return y(d.y) })
+
+        svg.selectAll("circle.dots").data(data).enter().append("circle")
+          .attr("class", "dots")
+          .attr("id", function(d) { return d.type })
+          .attr("cx", function(d) { return x(d.x) })
+          .attr("cy", function(d) { return y(d.y) })
+          .attr("r", function() { return r(Math.random()) })
+          .attr("stroke-width", 2)
+          .attr("stroke", "#ff24e5")
+          .attr("fill", function() { return c(Math.random()) })
+          .attr("fill-opacity", .5)
+          .transition().duration(3000)
+            .attr("cx", Math.floor(Math.random()*width))
+            .attr("cy", Math.floor(Math.random()*height))
+
+        svg.selectAll("circle#blue")
+          .attr("fill", function() { return b(Math.random()) })
+          .attr("stroke-width", 2)
+          .attr("stroke", "#24afff")
+      // add once function
+      throttledPink = _.once(function() {
+         data.push({"x": Math.random(), "y": Math.random(), "type": "pink"});
+         data.push({"x": Math.random(), "y": Math.random(), "type": "blue"});
+
+      });
+
+      svg.selectAll("circle.dots").data(data).exit().remove();
+  }
+
+setInterval(update, 3000);
+setInterval(runDetection, 50);
+
+  </script>
+</body>
+</html>
+
+
+
+
+

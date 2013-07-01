@@ -70,7 +70,7 @@ body {
     // d3.select("#scorebox").text("High score! " + highScore);
       d3.select("#scorebox").text("Score " + counter + "  High score: " + highScore);
     // }
-  } 
+  }
 
   //make a character
   svg.append("svg:circle")
@@ -79,7 +79,7 @@ body {
       .attr("cx", width / 2)
       .attr("cy", height / 2)
       .attr("fill", "hsl(120, 120, 120)");
-  
+
   //given a function, return a function othat only gets called once
   function runDetection() {
     pinkCollision = false;
@@ -111,7 +111,7 @@ body {
     var distance = Math.sqrt(Math.pow((caesarX - enemyX), 2) + Math.pow((caesarY - enemyY), 2));
     // console.log('distance', distance);
     // console.log('sum of radii', sumOfRadii);
-    if (distance <= sumOfRadii && enemy.attr("id") === "pink") { 
+    if (distance <= sumOfRadii && enemy.attr("id") === "pink") {
       duration = duration - 50;
       enemy.remove();
       data.pop();
@@ -123,6 +123,7 @@ body {
       data = [];
       update();
       var currentCounter = counter;
+      duration = 3000;
       counter = 0;
       updateScore();
       data.push({"x": Math.random(), "y": Math.random(), "type": "pink"});
